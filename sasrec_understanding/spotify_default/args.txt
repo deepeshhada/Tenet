@@ -1,0 +1,13 @@
+at_k,5
+batch_size,128
+dataset,spotify
+dropout_rate,0.5
+hidden_units,50
+l2_emb,0.0
+lr,0.001
+maxlen,50
+num_blocks,2
+num_epochs,400
+num_heads,1
+path,/home/vijai/tenet/data_tenet/required/spotify_small_small/sasrec/
+train_dir,default

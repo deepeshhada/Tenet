@@ -1,0 +1,13 @@
+at_k,5
+batch_size,4
+dataset,zhihu
+dropout_rate,0.0
+hidden_units,6
+l2_emb,0.0
+lr,0.001
+maxlen,20
+num_blocks,1
+num_epochs,30
+num_heads,1
+path,/home/vijai/tenet/data_tenet/required/zhihu_small_small/sasrec/
+train_dir,default

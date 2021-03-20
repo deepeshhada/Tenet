@@ -1,0 +1,17 @@
+1. It seems adding positional embedding provide extra performance on Zhihu dataset
+
+2. Peculiarly, WrapSampler gives better performance that my batch and negative sampling approaches
+
+3. Keeping the following is necessary to get same results:
+        torch.manual_seed(20)
+        torch.cuda.manual_seed(20)
+        torch.cuda.manual_seed_all(7)
+        np.random.seed(20)
+        #random.seed(7)
+        torch.manual_seed(20)
+        torch.backends.cudnn.deterministic = True
+        torch.backends.cudnn.benchmark = False
+
+   But, not always gives same results. Especially, when sampler and dataloader are used and worker threads are involved
+
+4. Setting worker=1 provides same result, but, worker=k where k>1 did not give same results

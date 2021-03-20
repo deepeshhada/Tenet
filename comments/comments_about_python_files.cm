@@ -1,0 +1,21 @@
+Main.py (Version 1)
+===================
+This is still main file for the gnn network
+
+seq_Main.py (version 2)
+=======================
+contains tqdm and WrapSample based approach for training.
+
+seq_mine_Main.py (Version 3)
+============================
+I am planning to write code keeping the following things in mind:
+
+(1) to cover all the list examples during training
+(2) batch indices
+(3) availing more negative examples to each item in the list during training
+
+comments about the backup files for TenetSeq.py
+===============================================
+
+bkup100_TenetSeq.py ==> It uses Transformer model as given by language modeling example in torch official website. (bkuped before implementing my own version of transformerencoderlayer
+bkup110_TenetSeq.py ==> Updated with different versions of dropouts and user-list-item

@@ -85,7 +85,7 @@ if __name__ == '__main__':
 		print('preprocessing HNHN data dict...')
 		preprocess_data_hnhn.preprocess()
 	print('building HNHN hypergraph...')
-	hnhn_args, hnhn, hnhn_train_set, hnhn_train_loader, hnhn_val_loader, hnhn_test_loader = hypergraph.build_hypergraph()
+	hnhn_args, hnhn, hnhn_train_set, hnhn_train_loader, hnhn_val_loader, hnhn_test_loader = hypergraph.build_hypergraph(params)
 
 	# model-loss-optimizer defn =======================================================================
 	models = Models(params, device=device)
@@ -214,7 +214,7 @@ if __name__ == '__main__':
 				% (time()-t2, network, epoch_num, total_loss, ce_or_pairwise_loss, reg_loss, recon_loss))
 
 		# validation and test =======================================================================
-		if epoch_num > 0 and epoch_num % params.epoch_mod == 0:
+		if epoch_num % params.epoch_mod == 0:
 			t3 = time()
 			(valid_hits_lst, valid_ndcg_lst, valid_map_lst) = vt_err.get_update(hnhn, hnhn_val_loader, valid_flag=True)
 			(test_hits_lst, test_ndcg_lst, test_map_lst) = vt_err.get_update(hnhn, hnhn_test_loader, valid_flag=False)

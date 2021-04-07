@@ -124,7 +124,6 @@ class Hypertrain:
 		self.hypergraph = self.hypergraph.to_device(device)
 		v_init = self.args.v.to(device)
 		print("="*75)
-		# print(f"Epoch {epoch}/{self.args.n_epoch}")
 		epoch_losses = []
 		for data in tqdm(train_loader, position=0, leave=False):
 			data = {key: val.to(device) for key, val in data.items()}
@@ -246,8 +245,8 @@ def gen_data(args, data_dict):
 	return args
 
 
-def build_hypergraph():
-	args = utils.parse_args()
+def build_hypergraph(params):
+	args = utils.parse_args(params)
 
 	np.random.seed(args.seed)
 	torch.manual_seed(args.seed)

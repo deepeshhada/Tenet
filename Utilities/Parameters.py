@@ -23,6 +23,7 @@ class Parameters(object):
         self.batch_size_seq           = args.batch_size_seq
         self.valid_batch_siz          = args.valid_batch_siz
         self.lr                       = args.lr
+        self.hnhn_lr                  = args.hnhn_lr
         self.optimizer                = args.optimizer
         self.loss                     = args.loss
         if self.method in ['bpr']:

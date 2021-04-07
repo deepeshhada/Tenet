@@ -17,10 +17,11 @@ def parse_args():
 
     # algo-parameters
     parser.add_argument('--num_epochs',            type=int,   default=1, help='Number of epochs.')
-    parser.add_argument('--batch_size',            type=int,   default=2048, help='Batch size.')##2048
+    parser.add_argument('--batch_size',            type=int,   default=784, help='Batch size.')##2048
     parser.add_argument('--batch_size_seq',        type=int,   default=256, help='Seq batch size.') ##256
     parser.add_argument('--valid_batch_siz',       type=int,   default=32, help='Valid batch size.') ##seq, 32
     parser.add_argument('--lr',                    type=float, default=.001, help='Learning rate.')
+    parser.add_argument('--hnhn_lr',               type=float, default=.004, help='Learning rate for HNHN.')
     parser.add_argument('--optimizer',             nargs='?',  default='adam', help='adam')
     parser.add_argument('--loss',                  nargs='?',  default='ce', help='ce')
     parser.add_argument('--initializer',           nargs='?',  default='xavier', help='xavier')

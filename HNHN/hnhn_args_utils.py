@@ -21,8 +21,15 @@ data_dir = 'data'
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
 
-def parse_args():
+def parse_args(params):
     config = Namespace()
+
+    config.batch_size = params.batch_size
+    config.valid_batch_size = params.valid_batch_siz
+    config.valid_dim = 101
+    config.num_ng = params.num_negatives
+    config.dataset_name = params.dataset
+    config.learning_rate = params.hnhn_lr
 
     config.verbose = False
     config.exp_wt = False
@@ -38,15 +45,6 @@ def parse_args():
     config.seed = 20
     config.top_k = 10
     config.embed_dim = 64
-    config.learning_rate = 0.0004
-    config.n_epoch = 600
-    config.batch_size = 2048
-    config.test_batch_size = 101
-    config.dataset_name = 'zhihu'
-    config.num_ng = 1
-    config.num_ng_test = 100
-    config.valid_batch_size = 32
-    config.valid_dim = 101
 
     if config.dataset_name == 'zhihu':
         config.num_users = 1103

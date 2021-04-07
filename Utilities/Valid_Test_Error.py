@@ -43,69 +43,93 @@ class Valid_Test_Error(object):
             list_lst   += lists
             item_lst   += items
 
-        return (np.array(list_lst),np.array(item_lst)),np.array(pos_item_lst)
+        return (np.array(list_lst), np.array(item_lst)), np.array(pos_item_lst)
 
-    def get_update(self,model,epoch_num,device,valid_flag=True):
-        model.eval()
-        if valid_flag == True:
-            (list_input,item_input) = self.validArrDubles
-            num_inst   = self.num_valid_instances * self.valid_dim
-            posItemlst = self.valid_pos_items # parameter for evaluate_model
-            matShape   = (self.num_valid_instances, self.valid_dim)
-        else:
-            (list_input,item_input) = self.testArrDubles
-            num_inst   = self.num_test_instances * self.valid_dim
-            posItemlst = self.test_pos_items # parameter for evaluate_model
-            matShape   = (self.num_test_instances, self.valid_dim)
-
-        batch_siz      = self.valid_batch_siz * self.valid_dim
-        #print("jello")
-        #print(batch_siz, self.valid_batch_siz, self.valid_dim,num_inst)
-        #pdb.set_trace()
-
-        full_pred_torch_lst  = []
-        list_input_ten       = torch.from_numpy(list_input.astype(np.long)).to(device) ## could be moved to gpu before-hand
-        item_input_ten       = torch.from_numpy(item_input.astype(np.long)).to(device)
-        user_input           = self.list_user_vec[list_input]
-        user_input_ten       = torch.from_numpy(user_input.astype(np.long)).to(device)
-        batch                = Batch(num_inst,batch_siz,shuffle=False)
-        ##
-        user_input_ten = user_input_ten - 1
-        item_input_ten = item_input_ten + self.params.num_user - 2
-        list_input_ten = list_input_ten + self.params.num_user + self.params.num_item - 3
-
-        dataset = torch.stack((user_input_ten, item_input_ten, list_input_ten), dim=1).numpy()
-        df = pd.DataFrame(data=dataset)
+    def get_update(self, model, data_loader, valid_flag=True):
         if valid_flag:
-            df.to_csv("valid_set.csv", sep="\t", index=False, header=False)
+            (list_input, item_input) = self.validArrDubles
+            posItemlst = self.valid_pos_items
+            matShape = (self.num_valid_instances, self.valid_dim)
         else:
-            df.to_csv("test_set.csv", sep="\t", index=False, header=False)
-        return None, None, None
+            (list_input, item_input) = self.testArrDubles
+            posItemlst = self.test_pos_items
+            matShape = (self.num_test_instances, self.valid_dim)
 
-        ind = 0
-        while batch.has_next_batch():
-            batch_indices    = batch.get_next_batch_indices()
-            if self.params.method == 'bpr' or self.params.loss == 'pairwise':
-                user_neg_input = None
-                y_pred           = model(user_input_ten[batch_indices],user_neg_input, list_input_ten[batch_indices],item_input_ten[batch_indices]) # first argument for user
-            else:
-                y_pred           = model(user_indices=user_input_ten[batch_indices],list_indices=list_input_ten[batch_indices],item_indices=item_input_ten[batch_indices]) # first argument for user
-            full_pred_torch_lst.append(y_pred.detach().cpu().numpy())
-            #pdb.set_trace()
-            #print(len(full_pred_torch_lst))
+        preds = model.get_evaluation_preds(data_loader)
+        preds = np.array(preds)
 
-        #full_pred_np         = torch.cat(full_pred_torch_lst).data.cpu().numpy()
-        full_pred_np         = np.concatenate(full_pred_torch_lst) #.data.cpu().numpy()
-        # ==============================
+        predMatrix = np.array(preds).reshape(matShape)
+        itemMatrix = np.array(item_input).reshape(matShape)
 
-        predMatrix           = np.array(full_pred_np).reshape(matShape)
-        itemMatrix           = np.array(item_input).reshape(matShape)
-        '''
-        print('predMatrix')
-        print(predMatrix[0:20,0:20])
-        print('itemMatrix')
-        print(itemMatrix[0:20,0:20])
-        '''
+        (hits, ndcgs, maps) = evaluate_model(
+            posItemlst=posItemlst,
+            itemMatrix=itemMatrix,
+            predMatrix=predMatrix,
+            k=self.at_k,
+            num_thread=self.num_thread
+        )
+        return hits, ndcgs, maps
 
-        (hits, ndcgs, maps)  = evaluate_model(posItemlst=posItemlst,itemMatrix=itemMatrix,predMatrix=predMatrix,k=self.at_k,num_thread=self.num_thread)
-        return (hits, ndcgs, maps)
+    # def get_update_old(self, model, epoch_num, device, valid_flag=True):
+    #     model.eval()
+    #     if valid_flag:
+    #         (list_input, item_input) = self.validArrDubles
+    #         num_inst   = self.num_valid_instances * self.valid_dim
+    #         posItemlst = self.valid_pos_items # parameter for evaluate_model
+    #         matShape   = (self.num_valid_instances, self.valid_dim)
+    #     else:
+    #         (list_input,item_input) = self.testArrDubles
+    #         num_inst   = self.num_test_instances * self.valid_dim
+    #         posItemlst = self.test_pos_items # parameter for evaluate_model
+    #         matShape   = (self.num_test_instances, self.valid_dim)
+    #
+    #     batch_siz      = self.valid_batch_siz * self.valid_dim
+    #     #print("jello")
+    #     #print(batch_siz, self.valid_batch_siz, self.valid_dim,num_inst)
+    #     #pdb.set_trace()
+    #
+    #     full_pred_torch_lst  = []
+    #     list_input_ten       = torch.from_numpy(list_input.astype(np.long)).to(device) ## could be moved to gpu before-hand
+    #     item_input_ten       = torch.from_numpy(item_input.astype(np.long)).to(device)
+    #     user_input           = self.list_user_vec[list_input]
+    #     user_input_ten       = torch.from_numpy(user_input.astype(np.long)).to(device)
+    #     batch                = Batch(num_inst,batch_siz,shuffle=False)
+    #     ##
+    #     user_input_ten = user_input_ten - 1
+    #     item_input_ten = item_input_ten + self.params.num_user - 2
+    #     list_input_ten = list_input_ten + self.params.num_user + self.params.num_item - 3
+    #
+    #     # dataset = torch.stack((user_input_ten, item_input_ten, list_input_ten), dim=1).numpy()
+    #     # df = pd.DataFrame(data=dataset)
+    #     # if valid_flag:
+    #     #     df.to_csv("valid_set.csv", sep="\t", index=False, header=False)
+    #     # else:
+    #     #     df.to_csv("test_set.csv", sep="\t", index=False, header=False)
+    #
+    #     ind = 0
+    #     while batch.has_next_batch():
+    #         batch_indices    = batch.get_next_batch_indices()
+    #         if self.params.method == 'bpr' or self.params.loss == 'pairwise':
+    #             user_neg_input = None
+    #             y_pred           = model(user_input_ten[batch_indices],user_neg_input, list_input_ten[batch_indices],item_input_ten[batch_indices]) # first argument for user
+    #         else:
+    #             y_pred           = model(user_indices=user_input_ten[batch_indices],list_indices=list_input_ten[batch_indices],item_indices=item_input_ten[batch_indices]) # first argument for user
+    #         full_pred_torch_lst.append(y_pred.detach().cpu().numpy())
+    #         #pdb.set_trace()
+    #         #print(len(full_pred_torch_lst))
+    #
+    #     #full_pred_np         = torch.cat(full_pred_torch_lst).data.cpu().numpy()
+    #     full_pred_np         = np.concatenate(full_pred_torch_lst) #.data.cpu().numpy()
+    #     # ==============================
+    #
+    #     predMatrix           = np.array(full_pred_np).reshape(matShape)
+    #     itemMatrix           = np.array(item_input).reshape(matShape)
+    #     '''
+    #     print('predMatrix')
+    #     print(predMatrix[0:20,0:20])
+    #     print('itemMatrix')
+    #     print(itemMatrix[0:20,0:20])
+    #     '''
+    #
+    #     (hits, ndcgs, maps)  = evaluate_model(posItemlst=posItemlst,itemMatrix=itemMatrix,predMatrix=predMatrix,k=self.at_k,num_thread=self.num_thread)
+    #     return (hits, ndcgs, maps)

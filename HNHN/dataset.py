@@ -19,7 +19,7 @@ class GraphDataset(Dataset):
 		self.args = args
 
 	def __len__(self):
-		return self.args.train_len * (self.args.num_ng + 1)
+		return self.args.train_len
 
 	def __getitem__(self, index):
 		vidx = self.positive_vidx[index*3:(index*3)+3]

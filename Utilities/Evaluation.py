@@ -1,6 +1,8 @@
 import math,heapq,multiprocessing,sys,pdb
 import numpy as np
 from time import time
+from tqdm import tqdm
+
 
 _posItemlst   = None
 _itemMatrix   = None
@@ -41,8 +43,8 @@ def evaluate_model(posItemlst, itemMatrix, predMatrix, k, num_thread):
         return (hits, ndcgs, maps)
     
     # Single thread        
-    for ind in range(num_inst):
-        (hr,ndcg,mapval) = eval_one_rating(ind)        
+    for ind in tqdm(range(num_inst), leave=False, position=0):
+        (hr, ndcg, mapval) = eval_one_rating(ind)
         hits.append(hr)
         ndcgs.append(ndcg)
         maps.append(mapval)

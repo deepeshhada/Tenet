@@ -12,7 +12,7 @@ def parse_args():
     #parser.add_argument('--dataset',               nargs='?',  default='sample_small', help='Choose a dataset.')
     parser.add_argument('--res_path',              nargs='?',  default='/home/vijai/tenet/result_tenet/', help='result path for plots and best error values.')
     parser.add_argument('--res_folder',            nargs='?',  default='test', help='specific folder corresponding to different runs on different parameters.')
-    parser.add_argument('--include_networks',      nargs='?',  default="['gnn', 'seq']", help='include given networks in the model.')
+    parser.add_argument('--include_networks',      nargs='?',  default="['gnn']", help='include given networks in the model.')
     #parser.add_argument('--include_networks',      nargs='?',  default="['transformer','gnn']",help='loss based on the given interactions.')
 
     # algo-parameters
@@ -54,8 +54,8 @@ def parse_args():
 
     # valid and test
     parser.add_argument('--dataset_avg_flag_zero', type=int,  default=0,  help='Dataset item embed zero (or) avg. zero --> 1, else avg')
-    parser.add_argument('--epoch_mod',             type=int,  default=15,  help='epoch mod --> to display valid and test error.')
-    parser.add_argument('--num_thread',            type=int,  default=16, help='number of threads.')
+    parser.add_argument('--epoch_mod',             type=int,  default=5,  help='epoch mod --> to display valid and test error.')
+    parser.add_argument('--num_thread',            type=int,  default=1, help='number of threads.')
     parser.add_argument('--comment',               nargs='?', default='comment', help='comments about the current experimental iterations.')
 
     # new

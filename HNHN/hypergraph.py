@@ -139,16 +139,17 @@ class Hypertrain:
 			self.optim.step()
 			self.scheduler.step()
 		epoch_losses = np.array(epoch_losses)
-		print(f'train loss: {np.mean(epoch_losses)}')
+		mean_epoch_loss = np.mean(epoch_losses)
+		print(f'train loss: {mean_epoch_loss}')
 
-		# test_err = self.eval(v_init, graph_test_loader)
-		# print("test loss:", test_err)
 		print("="*75)
+		return mean_epoch_loss
 		# if test_err < best_err:
 		# 	best_err = test_err
 		# return pred_all, loss, best_err
 
-	def eval(self, v_init, data_loader):
+	def get_evaluation_preds(self, data_loader):
+		v_init = self.args.v
 		with torch.no_grad():
 			preds, tgt = [], []
 			for data in tqdm(data_loader, position=0, leave=False):
@@ -161,19 +162,6 @@ class Hypertrain:
 
 			preds = torch.Tensor(preds).squeeze().to(device)
 		return preds
-
-
-def train(args):
-	"""
-		args.vidx, args.eidx, args.nv, args.ne, args = s
-		args.e_weight = s
-		args.v_weight = s
-		label_idx, labels = s
-	"""
-	hypertrain = Hypertrain(args)
-	hypertrain.train()
-
-	return test_err
 
 
 def gen_data(args, data_dict):
@@ -244,16 +232,16 @@ def gen_data(args, data_dict):
 
 	paper2sum = defaultdict(list)
 	e_reg_wt = args.e_weight[0] ** args.alpha_e
-	# for i, (paper_idx, author_idx) in enumerate(paper_author.tolist()):
-	# 	paper2sum[paper_idx].append(e_reg_wt)
+	for i, (paper_idx, author_idx) in enumerate(paper_author.tolist()):
+		paper2sum[paper_idx].append(e_reg_wt)
 
 	v_reg_sum = torch.zeros(nv)
-	# for paper_idx, wt_l in paper2sum.items():
-	# 	v_reg_sum[paper_idx] = sum(wt_l)
-	#
-	# v_reg_sum[v_reg_sum == 0] = 1
-	# args.v_reg_sum = torch.Tensor(v_reg_sum).unsqueeze(-1)
-	args.v_reg_sum = torch.rand((21035, 1))
+	for paper_idx, wt_l in paper2sum.items():
+		v_reg_sum[paper_idx] = sum(wt_l)
+
+	v_reg_sum[v_reg_sum == 0] = 1
+	args.v_reg_sum = torch.Tensor(v_reg_sum).unsqueeze(-1)
+	# args.v_reg_sum = torch.rand((21035, 1))
 	print('dataset processed into tensors')
 	return args
 

@@ -11,51 +11,51 @@ class GraphDataset(Dataset):
 	def __init__(self, args):
 		self.node_X = args.v
 		self.v_weight = args.v_weight
-		self.positive_vidx = args.vidx
-		self.negatives = args.train_negatives
+		self.data_len = args.train_len * (args.num_ng + 1)
+		# self.positive_vidx = args.vidx
+		# self.negatives = args.train_negatives
+
+		self.user_inputs, self.item_inputs, self.list_inputs = torch.tensor([]), torch.tensor([]), torch.tensor([])
+		self.labels = torch.tensor([])
+
 		self.num_ng = args.num_ng
 		self.v_reg_wt = args.v_weight ** args.alpha_v
 		self.embed_dim = args.embed_dim
 		self.args = args
 
 	def __len__(self):
-		return self.args.train_len
+		return self.data_len
+		# return self.args.train_len
 
 	def __getitem__(self, index):
-		vidx = self.positive_vidx[index*3:(index*3)+3]
-		negatives = self.get_negative_instances(index)
-		vidx = torch.cat((vidx, negatives))
-		edge_x = self.node_X[vidx].view(-1, 3, self.embed_dim).sum(dim=1)
+		vidx = torch.tensor([self.user_inputs[index], self.item_inputs[index], self.list_inputs[index]]).long()
 		v_reg_weight = self.v_reg_wt[vidx]
+		edge_x = self.node_X[vidx].view(-1, 3, self.embed_dim).sum(dim=1)
+		label = self.labels[index]
 
-		return vidx, v_reg_weight, edge_x
-
-	def get_negative_instances(self, index):
-		return self.negatives[index*self.num_ng:(index*self.num_ng)+self.num_ng].view(-1)
+		return vidx, v_reg_weight, edge_x, label.view(1)
 
 
 class Collate:
 	def __init__(self, args):
 		self.args = args
-		self.num_ng = args.num_ng
 		self.v_reg_sum = args.v_reg_sum
 		self.e_reg_wt = (1 / 3) ** args.alpha_e  # shape = 1
 
 	def __call__(self, batch):
-		batch_size = len(batch) * (self.num_ng + 1)
+		batch_size = len(batch)
 		eidx = torch.from_numpy(np.arange(batch_size)).repeat_interleave(3).long()
 		e_reg_weight = (torch.ones(batch_size*3) * self.e_reg_wt).unsqueeze(-1)
-		labels = torch.zeros(self.num_ng + 1)
-		labels[0] = 1
-		labels = labels.repeat(len(batch))
 
 		vidx = batch[0][0]
 		v_reg_weight = batch[0][1]
 		edge_x = batch[0][2]
+		labels = batch[0][3]
 		for idx in range(1, len(batch)):
 			vidx = torch.cat((vidx, batch[idx][0]))
 			v_reg_weight = torch.cat((v_reg_weight, batch[idx][1]))
 			edge_x = torch.cat((edge_x, batch[idx][2]))
+			labels = torch.cat((labels, batch[idx][3]))
 
 		e_reg_sum = v_reg_weight.reshape((-1, 3)).sum(dim=1).unsqueeze(-1)
 

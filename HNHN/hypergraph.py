@@ -229,18 +229,18 @@ def gen_data(args, data_dict):
 	args.e_weight = torch.Tensor([(1 / w if w > 0 else 1) for w in authorwt]).unsqueeze(-1)  # 1)) / 2 #####torch.ones(ne, 1) / 3
 	assert len(args.v_weight) == nv and len(args.e_weight) == ne
 
-	paper2sum = defaultdict(list)
-	e_reg_wt = args.e_weight[0] ** args.alpha_e
-	for i, (paper_idx, author_idx) in enumerate(paper_author.tolist()):
-		paper2sum[paper_idx].append(e_reg_wt)
-
-	v_reg_sum = torch.zeros(nv)
-	for paper_idx, wt_l in paper2sum.items():
-		v_reg_sum[paper_idx] = sum(wt_l)
-
-	v_reg_sum[v_reg_sum == 0] = 1
-	args.v_reg_sum = torch.Tensor(v_reg_sum).unsqueeze(-1)
-	# args.v_reg_sum = torch.rand((21035, 1))
+	# paper2sum = defaultdict(list)
+	# e_reg_wt = args.e_weight[0] ** args.alpha_e
+	# for i, (paper_idx, author_idx) in enumerate(paper_author.tolist()):
+	# 	paper2sum[paper_idx].append(e_reg_wt)
+	#
+	# v_reg_sum = torch.zeros(nv)
+	# for paper_idx, wt_l in paper2sum.items():
+	# 	v_reg_sum[paper_idx] = sum(wt_l)
+	#
+	# v_reg_sum[v_reg_sum == 0] = 1
+	# args.v_reg_sum = torch.Tensor(v_reg_sum).unsqueeze(-1)
+	args.v_reg_sum = torch.rand((21035, 1))
 	print('dataset processed into tensors')
 	return args
 
@@ -258,7 +258,7 @@ def build_hypergraph(params):
 	hnhn = Hypertrain(args)
 
 	train_dataset = GraphDataset(args=args)
-	train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=False, collate_fn=Collate(args))
+	train_loader = DataLoader(dataset=train_dataset, batch_size=args.batch_size, shuffle=True, collate_fn=Collate(args))
 
 	valid_batch_size = args.valid_batch_size * args.valid_dim
 	val_dataset = GraphTestDataset(args=args, mode="val")

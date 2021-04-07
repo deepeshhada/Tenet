@@ -129,17 +129,22 @@ if __name__ == '__main__':
 				if params.include_hgnn and epoch_num > params.warm_start_gnn:
 					include_hgnn_flag = True
 				user_input, list_input, item_input, train_rating = ns_gnn.generate_instances()
+				#
 				user_input, list_input, item_input, train_rating = (
-					torch.from_numpy(user_input[params.num_train_instances:].astype(np.long)),
-					torch.from_numpy(list_input[params.num_train_instances:].astype(np.long)),
-					torch.from_numpy(item_input[params.num_train_instances:].astype(np.long)),
+					torch.from_numpy(user_input.astype(np.long)),
+					torch.from_numpy(list_input.astype(np.long)),
+					torch.from_numpy(item_input.astype(np.long)),
 					torch.from_numpy(train_rating.astype(np.float32))
 				)
 
 				user_input = user_input - 1
 				item_input = item_input + params.num_user - 2
 				list_input = list_input + params.num_user + params.num_item - 3
-				hnhn_train_set.negatives = torch.stack((user_input, item_input, list_input), dim=1).long()
+				hnhn_train_set.user_inputs = user_input
+				hnhn_train_set.item_inputs = item_input
+				hnhn_train_set.list_inputs = list_input
+				hnhn_train_set.labels = train_rating
+				# hnhn_train_set.negatives = torch.stack((user_input, item_input, list_input), dim=1).long()
 
 				num_inst = len(user_input)
 			elif network == 'seq':

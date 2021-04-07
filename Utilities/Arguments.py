@@ -35,7 +35,7 @@ def parse_args():
 
     # hyper-parameters
     parser.add_argument('--num_factors',           type=int,   default=80, help='Embedding size.')
-    parser.add_argument('--num_negatives',         type=int,   default=1, help='Negative instances in sampling.')
+    parser.add_argument('--num_negatives',         type=int,   default=4, help='Negative instances in sampling.')
     parser.add_argument('--num_negatives_seq',     type=int,   default=2, help='Negative instances in sampling for seq (done in main itself).')
     parser.add_argument('--reg_w',                 type=float, default=0.0000, help="Regularization for weight vector.")
     parser.add_argument('--reg_b',                 type=float, default=0.000, help="Regularization for user and item bias embeddings.")

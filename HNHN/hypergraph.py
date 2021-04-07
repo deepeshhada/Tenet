@@ -149,7 +149,7 @@ class Hypertrain:
 		# return pred_all, loss, best_err
 
 	def get_evaluation_preds(self, data_loader):
-		v_init = self.args.v
+		v_init = self.args.v.to(device)
 		with torch.no_grad():
 			preds, tgt = [], []
 			for data in tqdm(data_loader, position=0, leave=False):
@@ -160,7 +160,7 @@ class Hypertrain:
 				)
 				preds.extend(pred.cpu().detach().tolist())
 
-			preds = torch.Tensor(preds).squeeze().to(device)
+			preds = torch.Tensor(preds).squeeze().cpu().numpy()
 		return preds
 
 

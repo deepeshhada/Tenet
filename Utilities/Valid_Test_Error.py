@@ -56,8 +56,6 @@ class Valid_Test_Error(object):
             matShape = (self.num_test_instances, self.valid_dim)
 
         preds = model.get_evaluation_preds(data_loader)
-        preds = np.array(preds)
-
         predMatrix = np.array(preds).reshape(matShape)
         itemMatrix = np.array(item_input).reshape(matShape)
 

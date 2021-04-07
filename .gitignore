@@ -130,4 +130,4 @@ dmypy.json
 .pyre/
 
 # datasets
-./HNHN/processed/
+./HNHN/processed/zhihu

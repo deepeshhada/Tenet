@@ -6,6 +6,7 @@ import numpy as np
 import scipy.sparse as sp
 
 import utils
+import pandas as pd
 ## Fix all the object with proper validation and test information along with proper training time info
 
 class Dataset(object):
@@ -42,6 +43,28 @@ class Dataset(object):
         self.train_matrix            = self.get_train_matrix_sp(self.list_items_dct,self.num_list,self.num_item)
         self.train_matrix_item_seq   = self.get_dct_mat_seq_remove_test(dct=self.list_items_dct, num_row=self.num_list, num_col=self.max_item_seq_length+1, padding_value=0) ##last_index :] for all, :-1] for remove test item, :-2] for removing test and valid
         self.train_matrix_item_seq_for_test = self.get_dct_mat_seq_for_test(dct=self.list_items_dct, num_row=self.num_list, num_col=self.max_item_seq_length, padding_value=0) ##last_index :] for all, :-1] for remove test item, :-2] for removing test and valid
+
+        # df = pd.DataFrame(self.trainArrTriplets)
+        # df = df.transpose()
+        # df.columns = ['list', 'item', 'rating']
+        # df.to_csv('./trainArrTriplets.csv', index=False, sep="\t")
+        #
+        # df = pd.DataFrame(self.validArrDubles)
+        # df = df.transpose()
+        # df.columns = ['list', 'item']
+        # df.to_csv('./validArrDubles.csv', index=False, sep="\t")
+        #
+        # df = pd.DataFrame(self.testArrDubles)
+        # df = df.transpose()
+        # df.columns = ['list', 'item']
+        # df.to_csv('./testArrDubles.csv', index=False, sep="\t")
+        #
+        # l2 = np.arange(len(self.list_user_vec))
+        # list_user_vec = (l2, self.list_user_vec)
+        # df = pd.DataFrame(list_user_vec)
+        # df = df.transpose()
+        # df.columns = ['list', 'user']
+        # df.to_csv('./list_user_vec.csv', index=False, sep="\t")
         #pdb.set_trace()
         print("hai")
 

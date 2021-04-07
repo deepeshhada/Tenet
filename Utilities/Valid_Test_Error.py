@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import torch,pdb,math
 from Evaluation import evaluate_model
 from time import time
@@ -69,6 +70,18 @@ class Valid_Test_Error(object):
         user_input_ten       = torch.from_numpy(user_input.astype(np.long)).to(device)
         batch                = Batch(num_inst,batch_siz,shuffle=False)
         ##
+        user_input_ten = user_input_ten - 1
+        item_input_ten = item_input_ten + self.params.num_user - 2
+        list_input_ten = list_input_ten + self.params.num_user + self.params.num_item - 3
+
+        dataset = torch.stack((user_input_ten, item_input_ten, list_input_ten), dim=1).numpy()
+        df = pd.DataFrame(data=dataset)
+        if valid_flag:
+            df.to_csv("valid_set.csv", sep="\t", index=False, header=False)
+        else:
+            df.to_csv("test_set.csv", sep="\t", index=False, header=False)
+        return None, None, None
+
         ind = 0
         while batch.has_next_batch():
             batch_indices    = batch.get_next_batch_indices()

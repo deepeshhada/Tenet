@@ -1,7 +1,9 @@
 import sys,math,argparse,os,pdb,random,datetime
 import numpy as np
+import pandas as pd
 import torch
 from time import time
+from HNHN import preprocess_data_hnhn, hypergraph
 
 sys.path.append('./.')
 sys.path.append('./Utilities/.')
@@ -43,7 +45,6 @@ from tqdm import tqdm
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-#=========================================================================
 
 if __name__ == '__main__':
 
@@ -51,34 +52,44 @@ if __name__ == '__main__':
     print(args)
     print("Main_Both2")
     print('Data loading...')
-    t1,t_init = time(),time()
+    t1, t_init = time(), time()
     args.device = device
     args.date_time = datetime.datetime.now()
     print(args.date_time)
 
     if args.method.lower() in ['tenet']:
         if args.knn_graph == 'True':
-            dataset = EmbedDataset(args) ##change according to method
+            dataset = EmbedDataset(args)  # change according to method
         else:
-            dataset = TenetDataset(args) ##change according to method
+            dataset = TenetDataset(args)  # change according to method
     else:
         dataset = Dataset(args)
 
     params = Parameters(args,dataset)
-    print("""Load data done [%.1f s]. #user:%d, #list:%d, #item:%d, #train:%d, #valid:%d, #test:%d"""% (time() - t1, params.num_user, params.num_list,
-        params.num_item,params.num_train_instances,params.num_valid_instances,params.num_test_instances))
+    print("""Load data done [%.1f s]. #user:%d, #list:%d, #item:%d, #train:%d, #valid:%d, #test:%d""" %
+          (time() - t1, params.num_user, params.num_list, params.num_item, params.num_train_instances,
+           params.num_valid_instances, params.num_test_instances))
 
-    args.args_str        = params.get_args_to_string()
-    t1                   = time()
-    print("args str: ",args.args_str)
+    args.args_str = params.get_args_to_string()
+    t1 = time()
+    print("args str: ", args.args_str)
 
-    print("leng from list_items_list: ",len(utils.get_value_lists_as_list(params.list_items_dct)))
+    print("leng from list_items_list: ", len(utils.get_value_lists_as_list(params.list_items_dct)))
     print("leng from trainArrTriplets: ", len((params.trainArrTriplets[0])))
     print("non-zero entries in train_matrix: ", params.train_matrix.nnz)
 
+    # process HNHN data
+    hnhn_data_path = os.path.join("HNHN/processed", args.dataset)
+
+    if not os.path.exists(hnhn_data_path) or len(os.listdir(hnhn_data_path)) == 0:
+        print('preprocessing HNHN data dict...')
+        preprocess_data_hnhn.preprocess()
+    print('building HNHN hypergraph...')
+    hnhn_args, hnhn, hnhn_train_set, hnhn_train_loader, hnhn_val_loader, hnhn_test_loader = hypergraph.build_hypergraph()
+
     # model-loss-optimizer defn =======================================================================
-    models               = Models(params,device=device)
-    model                = models.get_model()
+    models = Models(params, device=device)
+    model = models.get_model()
 
     if params.loss not in ['bpr']: #bpr
         criterion_li     = torch.nn.BCELoss()
@@ -113,17 +124,24 @@ if __name__ == '__main__':
         model.train()
         for network in include_networks:
             t2 = time()
-            ce_or_pairwise_loss, reg_loss, recon_loss   = 0.0, 0.0, 0.0
+            ce_or_pairwise_loss, reg_loss, recon_loss = 0.0, 0.0, 0.0
             if network == 'gnn':
-                if params.include_hgnn == True and  epoch_num > params.warm_start_gnn: ##
+                if params.include_hgnn and epoch_num > params.warm_start_gnn:
                     print("including hgnn")
                     include_hgnn_flag = True
-                user_input,list_input,item_input,train_rating   = ns_gnn.generate_instances()
-                user_input,list_input,item_input,train_rating   = (torch.from_numpy(user_input.astype(np.long)).to(device),
-                                                                   torch.from_numpy(list_input.astype(np.long)).to(device),
-                                                                   torch.from_numpy(item_input.astype(np.long)).to(device),
-                                                                   torch.from_numpy(train_rating.astype(np.float32)).to(device))
-                                                                   ##torch.from_numpy(train_rating.astype(np.long)).to(device))
+                user_input, list_input, item_input, train_rating = ns_gnn.generate_instances()
+                user_input, list_input, item_input, train_rating = (
+                    torch.from_numpy(user_input[params.num_train_instances:].astype(np.long)),
+                    torch.from_numpy(list_input[params.num_train_instances:].astype(np.long)),
+                    torch.from_numpy(item_input[params.num_train_instances:].astype(np.long)),
+                    torch.from_numpy(train_rating.astype(np.float32))
+                )
+
+                user_input = user_input - 1
+                item_input = item_input + params.num_user - 2
+                list_input = list_input + params.num_user + params.num_item - 3
+                hnhn_train_set.negatives = torch.stack((user_input, item_input, list_input), dim=1).long()
+
                 num_inst = len(user_input)
             elif network == 'seq':
                 list_input, item_seq, item_seq_pos, item_seq_neg                = ns_seq.generate_instances()
@@ -137,52 +155,71 @@ if __name__ == '__main__':
             # negative sampling end =======================================================================
 
             if network == 'gnn' and params.loss not in ['bpr']:
-                batch    = Batch(num_inst,params.batch_size,shuffle=True)
+                batch = Batch(num_inst,params.batch_size,shuffle=True)
                 while batch.has_next_batch():
                     batch_indices = batch.get_next_batch_indices()
                     optimizer_gnn.zero_grad()
+                    hypertrain.train_one_epoch(hnhn_train_loader)
 
-                    y_pred        = model(user_indices=user_input[batch_indices],list_indices=list_input[batch_indices],
-                                          item_indices=item_input[batch_indices],network=network,include_hgnn=include_hgnn_flag)
-                    y_orig        = train_rating[batch_indices]
-                    loss          = criterion_li(y_pred,y_orig)
+                    y_pred = model(
+                        user_indices=user_input[batch_indices],
+                        list_indices=list_input[batch_indices],
+                        item_indices=item_input[batch_indices],
+                        network=network,
+                        include_hgnn=include_hgnn_flag
+                    )
+                    y_orig = train_rating[batch_indices]
+                    loss = criterion_li(y_pred, y_orig)
+
                     loss.backward()
-                    ##torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
                     optimizer_gnn.step()
                     ce_or_pairwise_loss += loss * len(batch_indices)
             elif network == 'seq':
-                batch    = Batch(num_inst,params.batch_size_seq,shuffle=True)
+                batch = Batch(num_inst,params.batch_size_seq,shuffle=True)
                 while batch.has_next_batch():
                     batch_indices = batch.get_next_batch_indices()
                     optimizer_seq.zero_grad()
-                    y_pred_seq_pos, y_pred_seq_neg, is_target  = model(user_indices=user_input[batch_indices].long(),list_indices=list_input[batch_indices].long(),
-                                                                       item_seq=item_seq[batch_indices].long(),item_seq_pos=item_seq_pos[batch_indices].long(),
-                                                                       item_seq_neg=item_seq_neg[batch_indices].long(),train=True,network=network)
+
+                    y_pred_seq_pos, y_pred_seq_neg, is_target = model(
+                        user_indices=user_input[batch_indices].long(),
+                        list_indices=list_input[batch_indices].long(),
+                        item_seq=item_seq[batch_indices].long(),
+                        item_seq_pos=item_seq_pos[batch_indices].long(),
+                        item_seq_neg=item_seq_neg[batch_indices].long(),
+                        train=True,
+                        network=network
+                    )
+
                     first_flag = True
-                    # new ===================================================================
+
                     for ind_neg in range(params.num_negatives_seq - 1):
-                        #pdb.set_trace()
                         neg_indices = np.arange(0,num_inst)
                         np.random.shuffle(neg_indices)
                         neg_batch_indices = neg_indices[0:len(batch_indices)]
 
-                        _, y_pred_seq_neg_arr_local,_       = model(user_indices=user_input[batch_indices].long(),list_indices=list_input[batch_indices].long(),
-                                                                       item_seq=item_seq[batch_indices].long(),item_seq_pos=item_seq_pos[batch_indices].long(),
-                                                                       item_seq_neg=item_seq_neg[neg_batch_indices].long(),train=True,network=network) ##neg_batch_indices
-                        if first_flag == True:
+                        _, y_pred_seq_neg_arr_local, _ = model(
+                            user_indices=user_input[batch_indices].long(),
+                            list_indices=list_input[batch_indices].long(),
+                            item_seq=item_seq[batch_indices].long(),
+                            item_seq_pos=item_seq_pos[batch_indices].long(),
+                            item_seq_neg=item_seq_neg[neg_batch_indices].long(),
+                            train=True,
+                            network=network
+                        )  # neg_batch_indices
+
+                        if first_flag:
                             first_flag = False
-                            y_pred_seq_neg_sum          = (1- y_pred_seq_neg_arr_local + 1e-24).log() * is_target
+                            y_pred_seq_neg_sum = (1 - y_pred_seq_neg_arr_local + 1e-24).log() * is_target
                         else:
-                            y_pred_seq_neg_sum         += (1- y_pred_seq_neg_arr_local + 1e-24).log() * is_target
+                            y_pred_seq_neg_sum += (1 - y_pred_seq_neg_arr_local + 1e-24).log() * is_target
+
                     if params.num_negatives_seq <= 1:
-                        loss                                       = (-(y_pred_seq_pos + 1e-24).log() * is_target - (1- y_pred_seq_neg + 1e-24).log() * is_target).sum()/is_target.sum()
+                        loss = (-(y_pred_seq_pos + 1e-24).log() * is_target - (1 - y_pred_seq_neg + 1e-24).log() * is_target).sum()/is_target.sum()
                     else:
-                        loss                                       = (-(y_pred_seq_pos + 1e-24).log() * is_target - (1- y_pred_seq_neg + 1e-24).log() * is_target -
-                                                                        y_pred_seq_neg_sum).sum()/is_target.sum()
-                    # new-end ===================================================================
+                        loss = (-(y_pred_seq_pos + 1e-24).log() * is_target - (
+                                1 - y_pred_seq_neg + 1e-24).log() * is_target - y_pred_seq_neg_sum).sum()/is_target.sum()
 
                     loss.backward()
-                    ##torch.nn.utils.clip_grad_norm_(model.parameters(), 0.5)
                     optimizer_seq.step()
                     ce_or_pairwise_loss += loss
             # training end =======================================================================

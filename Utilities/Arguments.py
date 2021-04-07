@@ -12,7 +12,7 @@ def parse_args():
     #parser.add_argument('--dataset',               nargs='?',  default='sample_small', help='Choose a dataset.')
     parser.add_argument('--res_path',              nargs='?',  default='/home/vijai/tenet/result_tenet/', help='result path for plots and best error values.')
     parser.add_argument('--res_folder',            nargs='?',  default='test', help='specific folder corresponding to different runs on different parameters.')
-    parser.add_argument('--include_networks',      nargs='?',  default="['seq']", help='include given networks in the model.')
+    parser.add_argument('--include_networks',      nargs='?',  default="['gnn', 'seq']", help='include given networks in the model.')
     #parser.add_argument('--include_networks',      nargs='?',  default="['transformer','gnn']",help='loss based on the given interactions.')
 
     # algo-parameters

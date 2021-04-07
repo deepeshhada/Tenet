@@ -44,7 +44,7 @@ def parse_args(params):
     config.n_layers = 1
     config.seed = 20
     config.top_k = 10
-    config.embed_dim = 64
+    config.embed_dim = 300
 
     if config.dataset_name == 'zhihu':
         config.num_users = 1103

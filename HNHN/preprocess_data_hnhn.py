@@ -117,17 +117,20 @@ def process_generic_edge(args):
 				if user_id in id2node_idx:
 					idx = id2node_idx[user_id]
 					node_idx_set.add(idx)
-					X[idx] = user_x
+					# X[idx] = user_x
+					X[idx] = torch.rand(feat_dim)
 					classes[idx] = 'user'
 				if item_id in id2node_idx:
 					idx = id2node_idx[item_id]
 					node_idx_set.add(idx)
-					X[idx] = item_x
+					# X[idx] = item_x
+					X[idx] = torch.rand(feat_dim)
 					classes[idx] = 'item'
 				if list_id in id2node_idx:
 					idx = id2node_idx[list_id]
 					node_idx_set.add(idx)
-					X[idx] = list_x
+					# X[idx] = list_x
+					X[idx] = torch.rand(feat_dim)
 					classes[idx] = 'list'
 				if str(edge_id) in id2edge_idx:
 					idx = id2edge_idx[str(edge_id)]
@@ -172,8 +175,8 @@ def save_data_dict(root_path, key, value):
 	torch.save(value, os.path.join(root_path, key + '.pth'))
 
 
-def preprocess():
-	args = utils.parse_args()
+def preprocess(params):
+	args = utils.parse_args(params)
 
 	print(f'seeding for reproducibility at {args.seed}...')
 	utils.seed_everything(args.seed)

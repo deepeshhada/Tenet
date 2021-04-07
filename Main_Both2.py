@@ -83,7 +83,7 @@ if __name__ == '__main__':
 
 	if not os.path.exists(hnhn_data_path) or len(os.listdir(hnhn_data_path)) == 0:
 		print('preprocessing HNHN data dict...')
-		preprocess_data_hnhn.preprocess()
+		preprocess_data_hnhn.preprocess(params)
 	print('building HNHN hypergraph...')
 	hnhn_args, hnhn, hnhn_train_set, hnhn_train_loader, hnhn_val_loader, hnhn_test_loader = hypergraph.build_hypergraph(params)
 
@@ -228,7 +228,7 @@ if __name__ == '__main__':
 			print("[%.2f s] %15s Errors train %.4f valid hr: %.4f test hr: %.4f valid ndcg: %.4f test ndcg: %.4f valid map: %.4f test map: %.4f" %
 				(time()-t3, '', ce_or_pairwise_loss/num_inst, valid_hr, test_hr, valid_ndcg, test_ndcg, valid_map, test_map))
 
-			error_plot.append(loss, recon_loss, reg_loss, ce_or_pairwise_loss, valid_hr, test_hr, valid_ndcg, test_ndcg, valid_map, test_map)
+			# error_plot.append(loss, recon_loss, reg_loss, ce_or_pairwise_loss, valid_hr, test_hr, valid_ndcg, test_ndcg, valid_map, test_map)
 			print('Time taken for this epoch: {:.2f} m'.format((time()-tt)/60))
 
 	# =============================================================================================

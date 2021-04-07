@@ -12,8 +12,6 @@ class GraphDataset(Dataset):
 		self.node_X = args.v
 		self.v_weight = args.v_weight
 		self.data_len = args.train_len * (args.num_ng + 1)
-		# self.positive_vidx = args.vidx
-		# self.negatives = args.train_negatives
 
 		self.user_inputs, self.item_inputs, self.list_inputs = torch.tensor([]), torch.tensor([]), torch.tensor([])
 		self.labels = torch.tensor([])

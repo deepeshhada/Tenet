@@ -107,7 +107,7 @@ if __name__ == '__main__':
     ns_gnn               = NegativeSamples(params.train_matrix,params.num_negatives,params)
     ns_seq               = ListNegativeSamples(params.train_matrix_item_seq, params.num_negatives,params)
 
-    include_hgnn_flag = False
+    include_hgnn_flag = True
     for epoch_num in range(params.num_epochs+1):
         tt = time()
         model.train()

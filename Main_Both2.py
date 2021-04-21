@@ -117,6 +117,7 @@ if __name__ == '__main__':
             if network == 'gnn':
                 if params.include_hgnn == True and  epoch_num > params.warm_start_gnn: ##
                     print("including hgnn")
+                    params.epoch_mod = 1
                     include_hgnn_flag = True
                 user_input,list_input,item_input,train_rating   = ns_gnn.generate_instances()
                 user_input,list_input,item_input,train_rating   = (torch.from_numpy(user_input.astype(np.long)).to(device),
